@@ -18,6 +18,7 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 const database = client.db("tototravel");
 const hotelCollection = database.collection('hotels');
+const orderCollection = database.collection('orders');
 
 const run = async () => {
     try {
@@ -45,6 +46,56 @@ const run = async () => {
             const result = await hotelCollection.insertOne(data);
             res.json(result);
         })
+
+        //post order api
+
+        app.post('/orders', async (req, res) => {
+            const data = req.body;
+            const result = await orderCollection.insertOne(data);
+            res.json(result);
+        })
+        //get my orders
+        app.get('/my-order/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const cursor = orderCollection.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+        //get all order
+        app.get('/orders', async (req, res) => {
+            const query = {};
+            const cursor = orderCollection.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
+
+        });
+
+        // delete order api 
+        app.delete('/orders/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) }
+            const result = await orderCollection.deleteOne(query);
+            res.json(result);
+        })
+
+        //update order
+
+        app.put('/orders/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) }
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    status: `confirm`
+                },
+            };
+            const result = await orderCollection.updateOne(filter, updateDoc, options);
+            res.json(result);
+        })
+
+
+
     }
     finally {
 
